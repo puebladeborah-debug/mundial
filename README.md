@@ -1,7 +1,13 @@
 # Quiniela Mundial 2026
 
-App para capturar los goles de cada partido de la fase de grupos y ver la
-tabla de posiciones por persona (sistema 3-1-0: victoria/empate/derrota).
+App para capturar los goles de cada partido de la fase de grupos, agregar
+notas por partido, y ver la tabla de posiciones por persona (sistema 3-1-0:
+victoria/empate/derrota).
+
+La pestaña **Ajustes** permite, sin tocar código:
+- Cambiar el nombre que se muestra de cada una de las 6 personas.
+- Reasignar qué persona tiene cada país — útil en la fase de eliminatorias,
+  cuando se vaya sabiendo qué selección avanzó y a quién le toca.
 
 ## Subir a GitHub
 
@@ -42,13 +48,18 @@ marcadores se guardan en `data/scores.local.json` en tu propia máquina.
 
 ## Estructura
 
-- `data/matches.js` — los 52 partidos de la fase de grupos, con el país
-  asignado a cada persona de la quiniela.
-- `lib/store.js` — guarda/lee los marcadores (Redis en producción, archivo
-  local en desarrollo).
-- `app/api/scores/route.js` — API para leer y guardar goles.
-- `app/page.js` — interfaz: captura de goles y tabla de posiciones.
+- `data/matches.js` — los 52 partidos de la fase de grupos y la asignación
+  por defecto de país → persona (la pestaña Ajustes permite cambiarla sin
+  tocar este archivo).
+- `lib/store.js` — guarda/lee marcadores, notas y ajustes (Redis en
+  producción, archivos locales en desarrollo).
+- `app/api/scores/route.js` — API para leer/guardar goles y notas por partido.
+- `app/api/settings/route.js` — API para leer/guardar nombres de personas y
+  la asignación país → persona.
+- `app/page.js` — interfaz: captura de goles y notas, tabla de posiciones,
+  y pestaña de Ajustes.
 
 Cuando termine la fase de grupos (27 de junio) y se sepan los cruces de
 eliminatorias, hay que agregar esos partidos a `data/matches.js` con sus
-equipos reales.
+equipos reales (los países ya existentes se reasignan desde la app misma,
+en Ajustes, sin tocar código).
