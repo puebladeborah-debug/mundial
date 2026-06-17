@@ -33,6 +33,12 @@ html, body {
   margin: 6px 0 0;
 }
 
+.live-indicator {
+  color: #2a9d8f !important;
+  font-weight: 700;
+  font-size: 11px !important;
+}
+
 .tabs {
   display: flex;
   gap: 8px;
@@ -188,6 +194,7 @@ html, body {
 
 .status-text { color: #9fb6d6; }
 .status-text.saved { color: #2a9d8f; font-weight: 700; }
+.status-text.error { color: #e63946; font-weight: 700; }
 
 .standings-table {
   width: 100%;
