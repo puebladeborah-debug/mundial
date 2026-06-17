@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Solo estos dos documentos existen para esta app. Todo lo demás
+    // queda bloqueado por default (no hay autenticación: cualquiera con
+    // el link de la app puede leer/escribir solo estos dos documentos).
+    match /quiniela/{docId} {
+      allow read, write: if docId == 'scores' || docId == 'settings';
+    }
+  }
+}
