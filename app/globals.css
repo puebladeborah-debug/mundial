@@ -139,6 +139,21 @@ html, body {
   color: #fff;
 }
 
+.note-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: #0b1f3a;
+  color: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.note-input::placeholder { color: #5d7494; }
+
 .match-actions {
   display: flex;
   align-items: center;
@@ -210,4 +225,68 @@ html, body {
   text-align: center;
   color: #9fb6d6;
   padding: 40px 0;
+}
+
+.settings-section {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.settings-section h2 {
+  font-size: 16px;
+  color: #ffd60a;
+  margin: 0 0 4px;
+}
+
+.settings-hint {
+  font-size: 12px;
+  color: #9fb6d6;
+  margin: 0 0 14px;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.name-input {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: #0b1f3a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.owner-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.owner-row .flag { font-size: 20px; }
+
+.owner-country {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.owner-select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: #0b1f3a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
 }
