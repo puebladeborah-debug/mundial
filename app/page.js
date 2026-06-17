@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { doc, onSnapshot, setDoc, deleteField } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { GROUP_STAGE, FLAG, PERSONS as DEFAULT_PERSONS, OWNER as DEFAULT_OWNER } from "@/data/matches";
+
+const scoresRef = doc(db, "quiniela", "scores");
+const settingsRef = doc(db, "quiniela", "settings");
 
 function groupByDay(matches) {
   const days = [];
@@ -14,6 +19,17 @@ function groupByDay(matches) {
     map[m.day].push(m);
   }
   return days.map((day) => ({ day, matches: map[day] }));
+}
+
+function mergePersons(storedPersons) {
+  const persons = {};
+  for (const key of Object.keys(DEFAULT_PERSONS)) {
+    persons[key] = {
+      ...DEFAULT_PERSONS[key],
+      ...(storedPersons?.[key] ? { name: storedPersons[key] } : {}),
+    };
+  }
+  return persons;
 }
 
 function computeStandings(scores, persons, owners) {
@@ -58,7 +74,7 @@ function PersonBadge({ country, persons, owners }) {
   return <span className="badge" style={{ background: p.color }}>{p.name}</span>;
 }
 
-function MatchCard({ match, saved, persons, owners, onSave, onClear }) {
+function MatchCard({ match, saved, persons, owners }) {
   const savedHome = saved?.home !== undefined ? String(saved.home) : "";
   const savedAway = saved?.away !== undefined ? String(saved.away) : "";
   const savedNote = saved?.note || "";
@@ -83,16 +99,24 @@ function MatchCard({ match, saved, persons, owners, onSave, onClear }) {
     if (noteChanged) {
       patch.note = note.trim();
     }
-    await onSave(match.id, patch);
-    setStatus("saved");
+    try {
+      await setDoc(scoresRef, { [match.id]: patch }, { merge: true });
+      setStatus("saved");
+    } catch {
+      setStatus("error");
+    }
   }
 
   async function handleClear() {
     setStatus("saving");
     setHome("");
     setAway("");
-    await onClear(match.id);
-    setStatus("idle");
+    try {
+      await setDoc(scoresRef, { [match.id]: { home: deleteField(), away: deleteField() } }, { merge: true });
+      setStatus("idle");
+    } catch {
+      setStatus("error");
+    }
   }
 
   return (
@@ -151,6 +175,7 @@ function MatchCard({ match, saved, persons, owners, onSave, onClear }) {
 
       <div className="match-actions">
         {status === "saved" && <span className="status-text saved">Guardado ✓</span>}
+        {status === "error" && <span className="status-text error">Error al guardar</span>}
         {saved && (saved.home !== undefined) && <button className="clear-btn" onClick={handleClear}>Borrar marcador</button>}
         <button className="save-btn" disabled={!canSave || status === "saving"} onClick={handleSave}>
           Guardar
@@ -201,7 +226,7 @@ function StandingsTable({ scores, persons, owners }) {
   );
 }
 
-function SettingsPanel({ persons, owners, onSavePersons, onSaveOwner }) {
+function SettingsPanel({ persons, owners }) {
   const [names, setNames] = useState(
     Object.fromEntries(Object.entries(persons).map(([k, p]) => [k, p.name]))
   );
@@ -214,14 +239,21 @@ function SettingsPanel({ persons, owners, onSavePersons, onSaveOwner }) {
 
   async function handleSaveNames() {
     setNamesStatus("saving");
-    await onSavePersons(names);
-    setNamesStatus("saved");
+    try {
+      await setDoc(settingsRef, { persons: names }, { merge: true });
+      setNamesStatus("saved");
+    } catch {
+      setNamesStatus("error");
+    }
   }
 
   async function handleOwnerChange(country, personKey) {
     setSavingCountry(country);
-    await onSaveOwner(country, personKey);
-    setSavingCountry(null);
+    try {
+      await setDoc(settingsRef, { owners: { [country]: personKey } }, { merge: true });
+    } finally {
+      setSavingCountry(null);
+    }
   }
 
   const sortedCountries = useMemo(() => Object.keys(owners).sort((a, b) => a.localeCompare(b, "es")), [owners]);
@@ -244,6 +276,7 @@ function SettingsPanel({ persons, owners, onSavePersons, onSaveOwner }) {
         ))}
         <div className="match-actions">
           {namesStatus === "saved" && <span className="status-text saved">Guardado ✓</span>}
+          {namesStatus === "error" && <span className="status-text error">Error al guardar</span>}
           <button className="save-btn" disabled={namesStatus === "saving"} onClick={handleSaveNames}>
             Guardar nombres
           </button>
@@ -281,68 +314,35 @@ export default function Home() {
   const [persons, setPersons] = useState(DEFAULT_PERSONS);
   const [owners, setOwners] = useState(DEFAULT_OWNER);
   const [loaded, setLoaded] = useState(false);
+  const [connectionError, setConnectionError] = useState(false);
   const [tab, setTab] = useState("partidos");
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  async function fetchAll() {
-    const [scoresRes, settingsRes] = await Promise.all([
-      fetch("/api/scores", { cache: "no-store" }),
-      fetch("/api/settings", { cache: "no-store" }),
-    ]);
-    const scoresData = await scoresRes.json();
-    const settingsData = await settingsRes.json();
-    setScores(scoresData.scores || {});
-    setPersons(settingsData.persons || DEFAULT_PERSONS);
-    setOwners(settingsData.owners || DEFAULT_OWNER);
-    setLoaded(true);
-    setRefreshKey((k) => k + 1);
-  }
 
   useEffect(() => {
-    fetchAll();
+    const unsubScores = onSnapshot(
+      scoresRef,
+      (snap) => {
+        setScores(snap.data() || {});
+        setLoaded(true);
+        setConnectionError(false);
+      },
+      () => setConnectionError(true)
+    );
+
+    const unsubSettings = onSnapshot(
+      settingsRef,
+      (snap) => {
+        const data = snap.data();
+        setPersons(mergePersons(data?.persons));
+        setOwners({ ...DEFAULT_OWNER, ...(data?.owners || {}) });
+      },
+      () => setConnectionError(true)
+    );
+
+    return () => {
+      unsubScores();
+      unsubSettings();
+    };
   }, []);
-
-  async function handleSave(matchId, patch) {
-    const res = await fetch("/api/scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matchId, ...patch }),
-    });
-    const data = await res.json();
-    setScores(data.scores || {});
-  }
-
-  async function handleClear(matchId) {
-    const res = await fetch("/api/scores", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matchId, clearScore: true }),
-    });
-    const data = await res.json();
-    setScores(data.scores || {});
-  }
-
-  async function handleSavePersons(names) {
-    const res = await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ persons: names }),
-    });
-    const data = await res.json();
-    setPersons(data.persons || persons);
-    setOwners(data.owners || owners);
-  }
-
-  async function handleSaveOwner(country, personKey) {
-    const res = await fetch("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ owners: { [country]: personKey } }),
-    });
-    const data = await res.json();
-    setPersons(data.persons || persons);
-    setOwners(data.owners || owners);
-  }
 
   const days = useMemo(() => groupByDay(GROUP_STAGE), []);
 
@@ -351,6 +351,7 @@ export default function Home() {
       <div className="header">
         <h1>QUINIELA MUNDIAL 2026</h1>
         <p>Captura los goles de cada partido · hora CDMX</p>
+        <p className="live-indicator">{connectionError ? "⚠ Sin conexión con la base de datos" : "● En vivo — se sincroniza solo"}</p>
       </div>
 
       <div className="tabs">
@@ -365,38 +366,22 @@ export default function Home() {
         </button>
       </div>
 
-      <button className="refresh-btn" onClick={fetchAll}>↻ Actualizar</button>
-
       {!loaded && <div className="loading">Cargando…</div>}
 
       {loaded && tab === "partidos" && days.map((d) => (
         <div key={d.day}>
           <div className="day-title">{d.day}</div>
-          {d.matches.map((m) => (
-            <MatchCard
-              key={`${m.id}-${refreshKey}`}
-              match={m}
-              saved={scores[m.id]}
-              persons={persons}
-              owners={owners}
-              onSave={handleSave}
-              onClear={handleClear}
-            />
-          ))}
+          {d.matches.map((m) => {
+            const saved = scores[m.id];
+            const cardKey = `${m.id}:${saved?.home ?? ""}:${saved?.away ?? ""}:${saved?.note ?? ""}`;
+            return <MatchCard key={cardKey} match={m} saved={saved} persons={persons} owners={owners} />;
+          })}
         </div>
       ))}
 
       {loaded && tab === "tabla" && <StandingsTable scores={scores} persons={persons} owners={owners} />}
 
-      {loaded && tab === "ajustes" && (
-        <SettingsPanel
-          key={refreshKey}
-          persons={persons}
-          owners={owners}
-          onSavePersons={handleSavePersons}
-          onSaveOwner={handleSaveOwner}
-        />
-      )}
+      {loaded && tab === "ajustes" && <SettingsPanel persons={persons} owners={owners} />}
     </div>
   );
 }
