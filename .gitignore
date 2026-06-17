@@ -2,5 +2,3 @@ node_modules
 .next
 .env*.local
 .vercel
-data/scores.local.json
-data/settings.local.json
