@@ -1,0 +1,213 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #0b1f3a 0%, #0e2a4a 100%);
+  color: #fff;
+  font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 14px 60px;
+}
+
+.header {
+  text-align: center;
+  padding: 10px 0 18px;
+}
+
+.header h1 {
+  font-size: 28px;
+  color: #ffd60a;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.header p {
+  color: #bcd0ea;
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.tab-btn.active {
+  background: #ffd60a;
+  color: #0b1f3a;
+  border-color: #ffd60a;
+}
+
+.refresh-btn {
+  display: block;
+  margin: 0 auto 16px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: #bcd0ea;
+  font-size: 13px;
+}
+
+.day-title {
+  margin: 24px 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0b1f3a;
+  background: #ffd60a;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 8px;
+}
+
+.match-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.match-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #9fb6d6;
+  margin-bottom: 10px;
+}
+
+.match-meta .time { color: #ffd60a; font-weight: 700; }
+
+.team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.team-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.team-info .flag { font-size: 24px; }
+
+.team-info .names { display: flex; flex-direction: column; min-width: 0; }
+.team-info .country { font-weight: 700; font-size: 14px; }
+
+.badge {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0b1f3a;
+  width: fit-content;
+}
+
+.goal-input {
+  width: 46px;
+  height: 40px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: #0b1f3a;
+  color: #fff;
+}
+
+.match-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.save-btn {
+  padding: 7px 18px;
+  border-radius: 18px;
+  border: none;
+  background: #ffd60a;
+  color: #0b1f3a;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.save-btn:disabled {
+  opacity: 0.4;
+}
+
+.clear-btn {
+  padding: 7px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: #9fb6d6;
+  font-size: 12px;
+}
+
+.status-text { color: #9fb6d6; }
+.status-text.saved { color: #2a9d8f; font-weight: 700; }
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.standings-table th, .standings-table td {
+  padding: 8px 6px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.standings-table th { color: #9fb6d6; font-size: 11px; font-weight: 600; }
+
+.standings-table .person-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  font-weight: 700;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pts-cell { font-weight: 800; color: #ffd60a; }
+
+.loading {
+  text-align: center;
+  color: #9fb6d6;
+  padding: 40px 0;
+}
