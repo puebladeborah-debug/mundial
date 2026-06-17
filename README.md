@@ -2,12 +2,26 @@
 
 App para capturar los goles de cada partido de la fase de grupos, agregar
 notas por partido, y ver la tabla de posiciones por persona (sistema 3-1-0:
-victoria/empate/derrota).
+victoria/empate/derrota). Los datos se guardan en **Firebase Firestore**, en
+vivo: cualquier cambio de cualquier persona se ve al instante en todos los
+celulares, sin botón de actualizar.
 
 La pestaña **Ajustes** permite, sin tocar código:
 - Cambiar el nombre que se muestra de cada una de las 6 personas.
 - Reasignar qué persona tiene cada país — útil en la fase de eliminatorias,
   cuando se vaya sabiendo qué selección avanzó y a quién le toca.
+
+## Configurar Firestore (una sola vez)
+
+1. En la [consola de Firebase](https://console.firebase.google.com/), abre el
+   proyecto `mundial-d17a2` → **Build → Firestore Database → Create
+   database** (si no lo has creado todavía). Elige una región y "Start in
+   production mode".
+2. Ve a la pestaña **Rules** y pega las reglas de seguridad que delimitan el
+   acceso solo a los documentos que usa esta app (te las paso por separado).
+
+Sin este paso, la app no puede leer ni guardar nada — Firestore bloquea todo
+acceso por default hasta que las reglas lo permiten explícitamente.
 
 ## Subir a GitHub
 
@@ -25,16 +39,11 @@ La pestaña **Ajustes** permite, sin tocar código:
    Repository"**, selecciona el repo que acabas de subir y la cuenta/equipo
    donde quieras que quede.
 2. Vercel detecta que es un proyecto Next.js automáticamente — no necesitas
-   cambiar ningún ajuste. Da clic en **Deploy**.
-3. **Importante para que los goles se compartan entre todos los celulares:**
-   ya con el proyecto desplegado, ve a la pestaña **Storage** del proyecto →
-   **Create Database** → **Redis** → **Connect**. Esto agrega las variables
-   de entorno necesarias automáticamente.
-4. Vuelve a la pestaña **Deployments** y da clic en **Redeploy** en el último
-   deployment para que tome la base de datos nueva.
+   cambiar ningún ajuste ni variables de entorno. Da clic en **Deploy**.
 
-Sin el paso 3, la app sigue funcionando pero cada quien vería resultados
-distintos (no se guardan compartidos).
+No se necesita ninguna base de datos de Vercel: la configuración de Firebase
+ya está incluida en el código (la "apiKey" de Firebase no es secreta, el
+acceso real lo controlan las reglas de Firestore).
 
 ## Correrlo en tu computadora
 
@@ -43,21 +52,23 @@ npm install
 npm run dev
 ```
 
-Abre `http://localhost:3000`. En este modo, sin Redis configurado, los
-marcadores se guardan en `data/scores.local.json` en tu propia máquina.
+Abre `http://localhost:3000`. Ojo: aunque lo corras en tu máquina, lee y
+escribe en la misma base de datos de Firestore que usa todo mundo — no hay
+modo "solo local".
 
 ## Estructura
 
 - `data/matches.js` — los 52 partidos de la fase de grupos y la asignación
   por defecto de país → persona (la pestaña Ajustes permite cambiarla sin
   tocar este archivo).
-- `lib/store.js` — guarda/lee marcadores, notas y ajustes (Redis en
-  producción, archivos locales en desarrollo).
-- `app/api/scores/route.js` — API para leer/guardar goles y notas por partido.
-- `app/api/settings/route.js` — API para leer/guardar nombres de personas y
-  la asignación país → persona.
+- `lib/firebase.js` — inicializa el cliente de Firebase/Firestore.
 - `app/page.js` — interfaz: captura de goles y notas, tabla de posiciones,
-  y pestaña de Ajustes.
+  y pestaña de Ajustes. Lee/escribe directo en Firestore con `onSnapshot`
+  (tiempo real) y `setDoc` (guardar).
+
+Los datos viven en dos documentos de Firestore:
+- `quiniela/scores` — `{ [matchId]: { home, away, note } }`
+- `quiniela/settings` — `{ persons: { MARLEN: "Marlen", ... }, owners: { Argelia: "MARLEN", ... } }`
 
 Cuando termine la fase de grupos (27 de junio) y se sepan los cruces de
 eliminatorias, hay que agregar esos partidos a `data/matches.js` con sus
